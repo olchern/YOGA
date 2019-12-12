@@ -1,6 +1,6 @@
 window.addEventListener('DOMContentLoaded', function () {
-
     'use strict';
+
     const tab = document.querySelectorAll('.info-header-tab'),
         info = document.querySelector('.info-header'),
         tabContent = document.querySelectorAll('.info-tabcontent');
@@ -113,52 +113,116 @@ window.addEventListener('DOMContentLoaded', function () {
 
     //Form
 
-    let message = {
-        loading: "Загрузка...",
-        success: "Спасибо! Скоро мы с вами свяжемся",
-        failure: "Что-то пошло не так"
-    };
+    let massage = new Object();
+        massage.domLoading = 'Загрузка...';
+        massage.success = 'Спасибо! Скоро с Вами свяжутся';
+        massage.failure = 'Что-то пошло не так';
 
-    let form = document.querySelector('.main-form'),
-        input = form.getElementsByTagName('input'),
-        statusMessage = document.createElement('div');
-        
+        let form = document.getElementsByClassName('main-form')[0],
+            input = form.getElementsByTagName('input'),
+            form2 = document.getElementById('form'),
+            input2 = form2.getElementsByTagName('input'),
+            statusMessage = document.createElement('div');
         statusMessage.classList.add('status');
 
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        form.appendChild(statusMessage);
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            form.appendChild(statusMessage);
+            let formData = new FormData(form);
 
-        //AJAX
-        let request = new XMLHttpRequest();
-        request.open("POST", 'server.php');
-        request.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            function postData(data) {
+                return new Promise(function (resolve, reject) {
+                    //AJAX
+                    let request = new XMLHttpRequest();
+                    request.open('POST', 'server.php');
+                    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
-        let formData = new FormData(form);
+                    request.onreadystatechange = function () {
+                        if (request.readyState < 4) {
+                            resolve();
+                        } else if (request.readyState === 4) {
+                            if (request.status == 200 && request.status < 300) {
+                                resolve();
+                            }
+                            else {
+                                reject();
+                            }
+                        }
+                    };
 
-        let obj = {};
-        formData.forEach(function(value, key){
-            obj[key] = value;
-        });
-        let json = JSON.stringify(obj);
+                    request.send(formData);
+                });
 
-        request.send(json);
+            }
 
-        request.addEventListener('readystatechange', function () {
-            if (request.readyState < 4) {
-                statusMessage.innerHTML = message.loading;
-            } else if (request.readyState === 4 && request.status == 200) {
-                    statusMessage.innerHTML = message.success;
-                } else {
-                    statusMessage.innerHTML = message.failure;
+            function clearInput() {
+                for (let i = 0; i < input.length; i++) {
+                    input[i].value = '';
                 }
-            });
+            }
 
-        for (let i = 0; i < input.length; i++) {
-            input[i].value = '';
-        }
-    });
+            postData(formData)
+                .then(() => statusMessage.innerHTML = massage.loading)
+                .then(() => {
+                    statusMessage.innerHTML = massage.success;
+                    setInterval(() => {
+                        // eventListeners.modal().popupClose
+                        // //                     // modalSelectors.popupClose.click();
+                        // modalSelectors.popupClose.removeEventListener('click', x);
+                    }, 3000);
+                })
+                .catch(() => statusMessage.innerHTML = massage.failure)
+                .then(clearInput);
 
+        });
+
+        form2.addEventListener('submit', function (event) {
+            event.preventDefault();
+            form2.appendChild(statusMessage);
+            let statusField = this.querySelector('.status');
+            let formData = new FormData(form2);
+            let postData = function (data) {
+                return new Promise(function (resolve, reject) {
+                    //AJAX
+                    let request = new XMLHttpRequest();
+                    request.open('POST', 'server.php');
+                    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    request.onreadystatechange = function () {
+                        if (request.readyState < 4) {
+                            resolve();
+                        } else if (request.readyState === 4) {
+                            if (request.status == 200 && request.status < 300) {
+                                resolve();
+                            }
+                            else {
+                                reject();
+                            }
+                        }
+                    };
+                    request.send(formData);
+                });
+            };
+
+            let clearInput = function () {
+                for (let i = 0; i < input2.length; i++) {
+                    input2[i].value = '';
+                }
+            };
+            let hideStatus = function () {
+                statusField.style.display = 'none';
+            };
+
+            postData(formData)
+                .then(() => statusMessage.innerHTML = massage.loading)
+                .then(() => {
+                    statusMessage.innerHTML = massage.success;
+                    setTimeout(() => {
+                        hideStatus();
+                    }, 3000)
+                })
+                .catch(() => statusMessage.innerHTML = massage.failure)
+                .then(clearInput);
+        });
     //Slider 
 
     let slideIndex = 1,
@@ -172,10 +236,10 @@ window.addEventListener('DOMContentLoaded', function () {
 
     function showSlides(n) {
 
-        if(n > slides.length){
+        if (n > slides.length) {
             slideIndex = 1;
         }
-        if(n < 1){
+        if (n < 1) {
             slideIndex = slides.length;
         }
 
@@ -192,23 +256,66 @@ window.addEventListener('DOMContentLoaded', function () {
     function plusSlides(n) {
         showSlides(slideIndex += n);
     }
-    function currentSlide(n){
+
+    function currentSlide(n) {
         showSlides(slideIndex = n);
     }
 
-    prev.addEventListener('click', function (){
+    prev.addEventListener('click', function () {
         plusSlides(-1);
     });
 
-    next.addEventListener('click', function(){
+    next.addEventListener('click', function () {
         plusSlides(1);
     });
 
-    dotsWrap.addEventListener('click', function(event) {
-        for (let i = 0; i < dots.length + 1; i++){
-            if (event.target.classList.contains('dot') && event.target == dots[i-1]) {
-                 currentSlide(i);
+    dotsWrap.addEventListener('click', function (event) {
+        for (let i = 0; i < dots.length + 1; i++) {
+            if (event.target.classList.contains('dot') && event.target == dots[i - 1]) {
+                currentSlide(i);
             }
+        }
+    });
+
+    //Calc
+    let persons = document.querySelectorAll('.counter-block-input')[0],
+        restDays = document.querySelectorAll('.counter-block-input')[1],
+        place = document.getElementById('select'),
+        totalValue = document.getElementById('total'),
+        personsSum = 0,
+        daysSum = 0,
+        total = 0;
+
+    totalValue.innerHTML = 0;
+
+    persons.addEventListener('change', function () {
+        personsSum = parseInt(this.value);
+        this.value = personsSum;
+        total = (daysSum + personsSum) * 4000;
+        if (restDays.value == '' || persons.value == '' || persons.value <= 0 || restDays.value <= 0) {
+            totalValue.innerHTML = 0;
+        } else {
+            totalValue.innerHTML = total * place.options[place.selectedIndex].value;
+        }
+    });
+
+    restDays.addEventListener('change', function () {
+        daysSum = parseInt(this.value);
+        this.value = daysSum;
+        total = (daysSum + personsSum) * 4000;
+        if (restDays.value == '' || persons.value == '' || persons.value <= 0 || restDays.value <= 0) {
+            totalValue.innerHTML = 0;
+        } else {
+            totalValue.innerHTML = total * place.options[place.selectedIndex].value;
+        }
+    });
+
+    place.addEventListener('change', function () {
+        if (restDays.value == '' || persons.value == '' || persons.value <= 0 || restDays.value <= 0) {
+            totalValue.innerHTML = 0;
+        } else {
+            let a = total;
+            totalValue.innerHTML = a * this.options[this.selectedIndex].value;
         }
     });
 });
